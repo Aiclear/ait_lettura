@@ -1,4 +1,4 @@
-use super::schema::{articles, feed_metas, feeds, folders};
+use super::schema::{articles, bookmarks, feed_metas, feeds, folders};
 use diesel::sql_types::*;
 use diesel::sqlite::Sqlite;
 use serde::Serialize;
@@ -180,7 +180,44 @@ pub struct Folder {
 #[derive(Debug, Insertable, Clone)]
 #[diesel(table_name = folders)]
 pub struct NewFolder {
-  pub uuid: String,
-  pub name: String,
-  pub sort: i32,
+    pub uuid: String,
+    pub name: String,
+    pub sort: i32,
+}
+
+#[derive(Debug, Clone, Queryable, Serialize, QueryableByName)]
+pub struct Bookmark {
+    #[diesel(sql_type = Integer)]
+    pub id: i32,
+
+    #[diesel(sql_type = Text)]
+    pub uuid: String,
+
+    #[diesel(sql_type = Text)]
+    pub article_uuid: String,
+
+    #[diesel(sql_type = Text)]
+    pub article_title: String,
+
+    #[diesel(sql_type = Text)]
+    pub position: String,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub note: Option<String>,
+
+    #[diesel(sql_type = Text)]
+    pub create_date: String,
+
+    #[diesel(sql_type = Text)]
+    pub update_date: String,
+}
+
+#[derive(Debug, Insertable, Clone)]
+#[diesel(table_name = bookmarks)]
+pub struct NewBookmark {
+    pub uuid: String,
+    pub article_uuid: String,
+    pub article_title: String,
+    pub position: String,
+    pub note: Option<String>,
 }

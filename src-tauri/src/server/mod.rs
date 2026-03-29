@@ -41,6 +41,7 @@ pub async fn start_server(port: u16, state: tauri::State<'_, AppState>) -> std::
       .wrap(middleware::Logger::default())
       .configure(handlers::common::config)
       .configure(handlers::article::config)
+      .configure(handlers::bookmark::config)
       .configure(handlers::feed::config)
       .configure(handlers::folder::config)
   })

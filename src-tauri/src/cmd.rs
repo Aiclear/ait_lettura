@@ -269,6 +269,69 @@ pub fn import_opml(opml_content: String) -> Result<feed::opml::OpmlImportResult,
   feed::opml::import_opml(&opml_content)
 }
 
+#[command]
+pub fn create_bookmark(
+  article_uuid: String,
+  article_title: String,
+  position: String,
+  note: Option<String>,
+) -> Result<models::Bookmark, String> {
+  let request = feed::bookmark::CreateBookmarkRequest {
+    article_uuid,
+    article_title,
+    position,
+    note,
+  };
+  feed::bookmark::Bookmark::create_bookmark(request)
+}
+
+#[command]
+pub fn get_bookmarks(
+  article_uuid: Option<String>,
+  limit: Option<i64>,
+  offset: Option<i64>,
+) -> Result<Vec<models::Bookmark>, String> {
+  let filter = feed::bookmark::BookmarkFilter {
+    article_uuid,
+    limit: limit.map(|l| l as i32),
+    offset: offset.map(|o| o as i32),
+  };
+  feed::bookmark::Bookmark::get_bookmarks(filter)
+}
+
+#[command]
+pub fn get_bookmark_by_uuid(uuid: String) -> Result<Option<models::Bookmark>, String> {
+  feed::bookmark::Bookmark::get_bookmark_by_uuid(uuid)
+}
+
+#[command]
+pub fn update_bookmark(
+  uuid: String,
+  position: Option<String>,
+  note: Option<String>,
+) -> Result<models::Bookmark, String> {
+  let request = feed::bookmark::UpdateBookmarkRequest {
+    position,
+    note,
+  };
+  feed::bookmark::Bookmark::update_bookmark(uuid, request)
+}
+
+#[command]
+pub fn delete_bookmark(uuid: String) -> Result<usize, String> {
+  feed::bookmark::Bookmark::delete_bookmark(uuid)
+}
+
+#[command]
+pub fn get_article_by_uuid(uuid: String) -> Result<Option<feed::article::ArticleDetailResult>, String> {
+  Ok(feed::article::Article::get_article_with_uuid(uuid))
+}
+
+#[command]
+pub fn get_feed_by_uuid(uuid: String) -> Result<Option<models::Feed>, String> {
+  Ok(feed::channel::get_feed_by_uuid(&uuid))
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

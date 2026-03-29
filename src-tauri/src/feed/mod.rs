@@ -8,6 +8,7 @@ use reqwest;
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 
 pub mod article;
+pub mod bookmark;
 pub mod channel;
 pub mod folder;
 pub mod opml;

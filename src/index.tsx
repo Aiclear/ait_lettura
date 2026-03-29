@@ -14,6 +14,7 @@ import { RouteConfig } from "./config";
 import { ArticleContainer } from "./layout/Article";
 import { SearchPage } from "./layout/Search";
 import { FreshRSSPage } from "./layout/FreshRSS";
+import { BookmarkPage } from "./layout/Bookmark";
 
 import "./index.css";
 import "./i18n";

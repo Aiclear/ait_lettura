@@ -19,6 +19,19 @@ table! {
 }
 
 table! {
+    bookmarks (id) {
+        id -> Integer,
+        uuid -> Text,
+        article_uuid -> Text,
+        article_title -> Text,
+        position -> Text,
+        note -> Nullable<Text>,
+        create_date -> Timestamp,
+        update_date -> Timestamp,
+    }
+}
+
+table! {
     feed_metas (id) {
         id -> Integer,
         uuid -> Text,
@@ -62,4 +75,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(articles, feed_metas, feeds, folders,);
+allow_tables_to_appear_in_same_query!(articles, bookmarks, feed_metas, feeds, folders,);

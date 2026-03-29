@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api";
 import {
   Article,
   ArticleResItem,
+  Bookmark,
   Channel,
   FeedResItem,
   FolderResItem,
@@ -230,4 +231,58 @@ export const importOpml = async (
   opmlContent: string,
 ): Promise<OpmlImportResult> => {
   return invoke("import_opml", { opmlContent });
+};
+
+export const createBookmark = async (
+  article_uuid: string,
+  article_title: string,
+  position: string,
+  note?: string,
+): Promise<Bookmark> => {
+  return invoke("create_bookmark", {
+    article_uuid,
+    article_title,
+    position,
+    note,
+  });
+};
+
+export const getBookmarks = async (
+  filter?: { article_uuid?: string },
+  limit?: number,
+  offset?: number,
+): Promise<Bookmark[]> => {
+  return invoke("get_bookmarks", {
+    article_uuid: filter?.article_uuid,
+    limit,
+    offset,
+  });
+};
+
+export const getArticleByUuid = async (uuid: string): Promise<ArticleResItem> => {
+  return invoke("get_article_by_uuid", { uuid });
+};
+
+export const getFeedByUuid = async (uuid: string): Promise<FeedResItem> => {
+  return invoke("get_feed_by_uuid", { uuid });
+};
+
+export const getBookmarkByUuid = async (uuid: string): Promise<Bookmark | null> => {
+  return invoke("get_bookmark_by_uuid", { uuid });
+};
+
+export const updateBookmark = async (
+  uuid: string,
+  position?: string,
+  note?: string,
+): Promise<Bookmark> => {
+  return invoke("update_bookmark", {
+    uuid,
+    position,
+    note,
+  });
+};
+
+export const deleteBookmark = async (uuid: string): Promise<number> => {
+  return invoke("delete_bookmark", { uuid });
 };

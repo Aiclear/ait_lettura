@@ -88,3 +88,14 @@ export interface FolderResItem {
   create_date: string;
   update_date: string;
 }
+
+export interface Bookmark {
+  id?: number;
+  uuid: string;
+  article_uuid: string;
+  article_title: string;
+  position: string;
+  note: string | null;
+  create_date: string;
+  update_date: string;
+}
