@@ -1,10 +1,12 @@
 import { IconButton, Tooltip } from "@radix-ui/themes";
-import { CheckCircle2, Circle, Star } from "lucide-react";
+import { CheckCircle2, Circle, Star, Bookmark, BookmarkCheck } from "lucide-react";
 import { ArticleReadStatus, ArticleStarStatus } from "@/typing";
 import React, { useEffect, useState } from "react";
 import { ArticleResItem } from "@/db";
 import * as dataAgent from "@/helpers/dataAgent";
 import { useTranslation } from "react-i18next";
+import { useBearStore } from "@/stores";
+import { useShallow } from "zustand/react/shallow";
 
 export interface StarAndReadProps {
   article: ArticleResItem;
@@ -15,6 +17,15 @@ export function StarAndRead(props: StarAndReadProps) {
   const { t } = useTranslation();
   const [readStatus, setReadStatus] = useState<number>();
   const [starred, setStarred] = useState<number>();
+  const [bookmark, setBookmark] = useState<any>(null);
+  
+  const store = useBearStore(
+    useShallow((state) => ({
+      getBookmarkByArticle: state.getBookmarkByArticle,
+      createBookmark: state.createBookmark,
+      deleteBookmark: state.deleteBookmark,
+    }))
+  );
 
   function toggleReadStatus() {
     let newStatus: number = 1;

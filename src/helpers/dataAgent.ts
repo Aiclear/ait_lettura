@@ -5,6 +5,8 @@ import {
   Channel,
   FeedResItem,
   FolderResItem,
+  Bookmark,
+  BookmarkResItem,
 } from "../db";
 import { request } from "@/helpers/request";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
@@ -230,4 +232,41 @@ export const importOpml = async (
   opmlContent: string,
 ): Promise<OpmlImportResult> => {
   return invoke("import_opml", { opmlContent });
+};
+
+export const createBookmark = async (
+  articleUuid: string,
+  articleTitle: string,
+  feedUuid: string,
+  feedTitle: string,
+  readPosition: number,
+): Promise<Bookmark> => {
+  return invoke("create_bookmark", {
+    articleUuid,
+    articleTitle,
+    feedUuid,
+    feedTitle,
+    readPosition
+  });
+};
+
+export const getBookmarks = async (): Promise<AxiosResponse<BookmarkResItem[]>> => {
+  return request.get("bookmarks");
+};
+
+export const getBookmarkByArticle = async (
+  articleUuid: string,
+): Promise<AxiosResponse<BookmarkResItem | null>> => {
+  return request.get(`articles/${articleUuid}/bookmark`);
+};
+
+export const deleteBookmark = async (uuid: string): Promise<void> => {
+  return request.delete(`bookmarks/${uuid}`);
+};
+
+export const updateBookmarkPosition = async (
+  uuid: string,
+  readPosition: number,
+): Promise<void> => {
+  return request.post(`bookmarks/${uuid}/position`, { read_position: readPosition });
 };
