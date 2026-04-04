@@ -62,4 +62,15 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(articles, feed_metas, feeds, folders,);
+table! {
+    bookmarks (id) {
+        id -> Integer,
+        uuid -> Text,
+        article_uuid -> Text,
+        article_title -> Text,
+        read_position -> Integer,
+        create_date -> Timestamp,
+    }
+}
+
+allow_tables_to_appear_in_same_query!(articles, feed_metas, feeds, folders, bookmarks,);

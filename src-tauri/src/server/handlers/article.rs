@@ -1,4 +1,4 @@
-use actix_web::{get, post, web, Responder, Result};
+use actix_web::{get, post, delete, web, Responder, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::core;
@@ -78,6 +78,13 @@ pub struct SyncFeedQuery {
   feed_type: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BookmarkParam {
+  article_uuid: String,
+  article_title: String,
+  read_position: i32,
+}
+
 #[get("/api/feeds/{uuid}/sync")]
 pub async fn handle_sync_feed(
   uuid: web::Path<String>,
@@ -97,6 +104,41 @@ pub async fn handle_mark_as_read(
     is_today: body.is_today.clone(),
     is_all: body.is_all.clone(),
   });
+
+  Ok(web::Json(res))
+}
+
+#[post("/api/articles/bookmark")]
+pub async fn handle_add_bookmark(
+  body: web::Json<BookmarkParam>,
+) -> Result<impl Responder> {
+  let body = body.into_inner();
+  let res = feed::article::Article::add_bookmark(
+    body.article_uuid,
+    body.article_title,
+    body.read_position,
+  );
+
+  Ok(web::Json(res))
+}
+
+#[get("/api/articles/{uuid}/bookmark")]
+pub async fn handle_get_bookmark(uuid: web::Path<String>) -> Result<impl Responder> {
+  let res = feed::article::Article::get_bookmark(uuid.to_string());
+
+  Ok(web::Json(res))
+}
+
+#[get("/api/bookmarks")]
+pub async fn handle_get_all_bookmarks() -> Result<impl Responder> {
+  let res = feed::article::Article::get_all_bookmarks();
+
+  Ok(web::Json(res))
+}
+
+#[delete("/api/articles/{uuid}/bookmark")]
+pub async fn handle_delete_bookmark(uuid: web::Path<String>) -> Result<impl Responder> {
+  let res = feed::article::Article::delete_bookmark(uuid.to_string());
 
   Ok(web::Json(res))
 }
@@ -131,5 +173,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     .service(handle_mark_as_read)
     .service(handle_update_article_read_status)
     .service(handle_update_article_star_status)
-    .service(handle_articles);
+    .service(handle_articles)
+    .service(handle_add_bookmark)
+    .service(handle_get_bookmark)
+    .service(handle_get_all_bookmarks)
+    .service(handle_delete_bookmark);
 }

@@ -4,6 +4,8 @@ import React, { useImperativeHandle, useRef } from "react";
 
 export interface ScrollBoxRefObject {
   scrollToTop: () => void;
+  getScrollPosition: () => number;
+  scrollToPosition: (position: number) => void;
 }
 
 export interface ScrollBoxProps {
@@ -34,9 +36,24 @@ export const ScrollBox = React.forwardRef((props: ScrollBoxProps, ref: any) => {
     }
   };
 
+  const getScrollPosition = () => {
+    if (scrollRef.current) {
+      return scrollRef.current.scrollTop;
+    }
+    return 0;
+  };
+
+  const scrollToPosition = (position: number) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = position;
+    }
+  };
+
   useImperativeHandle(ref, () => {
     return {
       scrollToTop,
+      getScrollPosition,
+      scrollToPosition,
     };
   });
 

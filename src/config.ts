@@ -26,4 +26,6 @@ export enum RouteConfig {
   SETTINGS_FEED_MANAGER = "/settings/feed_manager",
   SETTINGS_IMPORT = "/settings/import",
   SETTINGS_EXPORT = "/settings/export",
+
+  BOOKMARK = "/bookmark",
 }

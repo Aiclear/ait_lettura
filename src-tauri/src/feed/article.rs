@@ -3,6 +3,7 @@ use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use diesel::sql_types::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::db::establish_connection;
 use crate::models;
@@ -573,5 +574,71 @@ impl Article {
     log::info!("{:?} articles purged", result);
 
     return result;
+  }
+
+  pub fn add_bookmark(article_uuid: String, article_title: String, read_position: i32) -> usize {
+    use crate::schema::bookmarks::dsl::{bookmarks, article_uuid as article_uuid_col, read_position as read_position_col, create_date};
+
+    let mut connection = establish_connection();
+    let bookmark_uuid = uuid::Uuid::new_v4().to_string();
+
+    // Check if bookmark already exists
+    let existing_bookmark = bookmarks
+      .filter(article_uuid_col.eq(&article_uuid))
+      .first::<models::Bookmark>(&mut connection)
+      .ok();
+
+    match existing_bookmark {
+      Some(_) => {
+        // Update existing bookmark
+        diesel::update(bookmarks.filter(article_uuid_col.eq(&article_uuid)))
+          .set((read_position_col.eq(read_position), create_date.eq(Utc::now().to_string())))
+          .execute(&mut connection)
+          .unwrap_or(0)
+      },
+      None => {
+        // Create new bookmark
+        let new_bookmark = models::NewBookmark {
+          uuid: bookmark_uuid,
+          article_uuid,
+          article_title,
+          read_position,
+        };
+
+        diesel::insert_into(bookmarks)
+          .values(&new_bookmark)
+          .execute(&mut connection)
+          .unwrap_or(0)
+      }
+    }
+  }
+
+  pub fn get_bookmark(article_uuid: String) -> Option<models::Bookmark> {
+    use crate::schema::bookmarks::dsl::{bookmarks, article_uuid as article_uuid_col};
+
+    let mut connection = establish_connection();
+    bookmarks
+      .filter(article_uuid_col.eq(&article_uuid))
+      .first::<models::Bookmark>(&mut connection)
+      .ok()
+  }
+
+  pub fn get_all_bookmarks() -> Vec<models::Bookmark> {
+    use crate::schema::bookmarks::dsl::{bookmarks, create_date};
+
+    let mut connection = establish_connection();
+    bookmarks
+      .order(create_date.desc())
+      .load::<models::Bookmark>(&mut connection)
+      .unwrap_or(vec![])
+  }
+
+  pub fn delete_bookmark(article_uuid: String) -> usize {
+    use crate::schema::bookmarks::dsl::{bookmarks, article_uuid as article_uuid_col};
+
+    let mut connection = establish_connection();
+    diesel::delete(bookmarks.filter(article_uuid_col.eq(&article_uuid)))
+      .execute(&mut connection)
+      .unwrap_or(0)
   }
 }

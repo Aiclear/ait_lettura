@@ -184,3 +184,33 @@ pub struct NewFolder {
   pub name: String,
   pub sort: i32,
 }
+
+#[derive(Debug, Queryable, Serialize, QueryableByName)]
+pub struct Bookmark {
+  #[diesel(sql_type = Integer)]
+  pub id: i32,
+
+  #[diesel(sql_type = Text)]
+  pub uuid: String,
+
+  #[diesel(sql_type = Text)]
+  pub article_uuid: String,
+
+  #[diesel(sql_type = Text)]
+  pub article_title: String,
+
+  #[diesel(sql_type = Integer)]
+  pub read_position: i32,
+
+  #[diesel(sql_type = Text)]
+  pub create_date: String,
+}
+
+#[derive(Debug, Insertable, Clone)]
+#[diesel(table_name = crate::schema::bookmarks)]
+pub struct NewBookmark {
+  pub uuid: String,
+  pub article_uuid: String,
+  pub article_title: String,
+  pub read_position: i32,
+}

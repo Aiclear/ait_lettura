@@ -269,6 +269,26 @@ pub fn import_opml(opml_content: String) -> Result<feed::opml::OpmlImportResult,
   feed::opml::import_opml(&opml_content)
 }
 
+#[command]
+pub fn add_bookmark(article_uuid: String, article_title: String, read_position: i32) -> usize {
+  feed::article::Article::add_bookmark(article_uuid, article_title, read_position)
+}
+
+#[command]
+pub fn get_bookmark(article_uuid: String) -> Option<models::Bookmark> {
+  feed::article::Article::get_bookmark(article_uuid)
+}
+
+#[command]
+pub fn get_all_bookmarks() -> Vec<models::Bookmark> {
+  feed::article::Article::get_all_bookmarks()
+}
+
+#[command]
+pub fn delete_bookmark(article_uuid: String) -> usize {
+  feed::article::Article::delete_bookmark(article_uuid)
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

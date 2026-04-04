@@ -10,6 +10,7 @@ import {
   Settings,
   FolderPlus,
   RotateCw,
+  Bookmark,
 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { ChannelList } from "../../components/Subscribes";
@@ -108,6 +109,20 @@ export const LocalPage = React.memo(function () {
                 {t("Search")}
               </NavLink>
             </>
+          </Tooltip>
+          <Tooltip content={t("Bookmarks")} side="right">
+            <NavLink
+              to={RouteConfig.BOOKMARK}
+              className={({ isActive }) => {
+                return clsx(
+                  "sidebar-item",
+                  isActive ? "sidebar-item--active" : "",
+                );
+              }}
+            >
+              <Bookmark size={16} />
+              {t("Bookmarks")}
+            </NavLink>
           </Tooltip>
           <AddFeedChannel>
             <div className={"sidebar-item"}>
