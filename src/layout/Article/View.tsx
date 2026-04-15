@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArticleDetail } from "@/components/ArticleView/Detail";
 import {
@@ -13,8 +13,9 @@ import { IconButton, Separator, Tooltip } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
 import { ArticleResItem } from "@/db";
 import { X, Bookmark, BookmarkCheck } from "lucide-react";
-import { withErrorToast } from "@/helpers/errorHandler";
-import { invoke } from "@tauri-apps/api";
+import { showErrorToast, showSuccessToast } from "@/helpers/errorHandler";
+import { useBearStore } from "@/stores";
+import { useShallow } from "zustand/react/shallow";
 
 export interface ArticleViewProps {
   article: ArticleResItem | null;
@@ -29,6 +30,17 @@ export function View(props: ArticleViewProps) {
   const scrollBoxRef = useRef<ScrollBoxRefObject>(null);
   const [hasBookmark, setHasBookmark] = React.useState(false);
   const [bookmarkPosition, setBookmarkPosition] = React.useState(0);
+  const [hasScrolledToBookmark, setHasScrolledToBookmark] = React.useState(false);
+
+  const store = useBearStore(
+    useShallow((state) => ({
+      activeBookmark: state.activeBookmark,
+      setActiveBookmark: state.setActiveBookmark,
+      getBookmark: state.getBookmark,
+      addBookmark: state.addBookmark,
+      deleteBookmark: state.deleteBookmark,
+    })),
+  );
 
   const renderPlaceholder = () => {
     return (
@@ -59,27 +71,44 @@ export function View(props: ArticleViewProps) {
     );
   };
 
-  // 检查文章是否有书签
+  const scrollToBookmarkPosition = useCallback((position: number) => {
+    if (scrollBoxRef.current && position > 0) {
+      setTimeout(() => {
+        scrollBoxRef.current?.scrollToPosition(position);
+        setHasScrolledToBookmark(true);
+      }, 200);
+    }
+  }, []);
+
   useEffect(() => {
-    if (props.article) {
+    if (store.activeBookmark && props.article) {
+      if (store.activeBookmark.article_uuid === props.article.uuid) {
+        setHasBookmark(true);
+        setBookmarkPosition(store.activeBookmark.read_position);
+        scrollToBookmarkPosition(store.activeBookmark.read_position);
+        store.setActiveBookmark(null);
+        return;
+      }
+    }
+    setHasScrolledToBookmark(false);
+  }, [store.activeBookmark, props.article, store.setActiveBookmark, scrollToBookmarkPosition]);
+
+  useEffect(() => {
+    if (props.article && !store.activeBookmark) {
       checkBookmark(props.article.uuid);
     }
-  }, [props.article]);
+  }, [props.article, store.activeBookmark]);
 
-  // 当有书签时，滚动到保存的位置
   useEffect(() => {
-    if (hasBookmark && scrollBoxRef.current) {
-      setTimeout(() => {
-        scrollBoxRef.current?.scrollToPosition(bookmarkPosition);
-      }, 100);
+    if (hasBookmark && bookmarkPosition > 0 && !hasScrolledToBookmark && !store.activeBookmark) {
+      scrollToBookmarkPosition(bookmarkPosition);
     }
-  }, [hasBookmark, bookmarkPosition]);
+  }, [hasBookmark, bookmarkPosition, hasScrolledToBookmark, store.activeBookmark, scrollToBookmarkPosition]);
 
-  // 检查书签
   const checkBookmark = async (articleUuid: string) => {
     try {
-      const bookmark = await invoke("get_bookmark", { articleUuid });
-      if (bookmark && typeof bookmark === 'object' && 'read_position' in bookmark) {
+      const bookmark = await store.getBookmark(articleUuid);
+      if (bookmark && bookmark.read_position !== undefined) {
         setHasBookmark(true);
         setBookmarkPosition(Number(bookmark.read_position) || 0);
       } else {
@@ -88,36 +117,37 @@ export function View(props: ArticleViewProps) {
       }
     } catch (error) {
       console.error("Error checking bookmark:", error);
+      setHasBookmark(false);
+      setBookmarkPosition(0);
     }
   };
 
-  // 保存或删除书签
   const toggleBookmark = async () => {
     if (!props.article || !scrollBoxRef.current) return;
 
     try {
       if (hasBookmark) {
-        // 删除书签
-        await invoke("delete_bookmark", { articleUuid: props.article.uuid });
+        await store.deleteBookmark(props.article.uuid);
         setHasBookmark(false);
         setBookmarkPosition(0);
+        showSuccessToast(t("Bookmark removed"));
       } else {
-        // 保存书签
         const scrollPosition = scrollBoxRef.current.getScrollPosition();
-        await invoke("add_bookmark", {
-          articleUuid: props.article.uuid,
-          articleTitle: props.article.title,
-          readPosition: scrollPosition,
-        });
+        await store.addBookmark(
+          props.article.uuid,
+          props.article.title,
+          scrollPosition,
+        );
         setHasBookmark(true);
         setBookmarkPosition(scrollPosition);
+        showSuccessToast(t("Bookmark added"));
       }
     } catch (error) {
-      console.error("Error toggling bookmark:", error);
+      showErrorToast(error, hasBookmark ? t("Failed to remove bookmark") : t("Failed to add bookmark"));
     }
   };
 
-   return (
+  return (
     <div className="flex-1 min-w-0">
       <div
         className={
