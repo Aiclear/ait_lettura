@@ -28,14 +28,50 @@ const spaces = [
   {
     label: "Lettura",
     route: RouteConfig.LOCAL_TODAY,
-    // icon: ;
   },
-  // {
-  //   label: "FreshRSS",
-  //   route: RouteConfig.SERVICE_FRESHRSS,
-  //   // icon: ;
-  // },
 ];
+
+const SidebarNavItem = ({
+  to,
+  icon: Icon,
+  label,
+  tooltip,
+}: {
+  to: string;
+  icon: React.ElementType;
+  label: string;
+  tooltip?: string;
+}) => {
+  const { t } = useTranslation();
+  const tooltipContent = tooltip || label;
+
+  const navLink = (
+    <NavLink
+      to={to}
+      className={({ isActive }) => {
+        return clsx(
+          "sidebar-item",
+          isActive ? "sidebar-item--active" : "",
+        );
+      }}
+    >
+      <Icon size={16} className="shrink-0" />
+      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+        {label}
+      </span>
+    </NavLink>
+  );
+
+  if (tooltipContent) {
+    return (
+      <Tooltip content={tooltipContent} side="right">
+        {navLink}
+      </Tooltip>
+    );
+  }
+
+  return navLink;
+};
 
 export const LocalPage = React.memo(function () {
   const { t } = useTranslation();
@@ -43,7 +79,6 @@ export const LocalPage = React.memo(function () {
     useShallow((state) => ({
       updateSettingDialogStatus: state.updateSettingDialogStatus,
       getSubscribes: state.getSubscribes,
-
       globalSyncStatus: state.globalSyncStatus,
     })),
   );
@@ -94,52 +129,30 @@ export const LocalPage = React.memo(function () {
           </div>
         </div>
         <div className="mt-4 px-2 pb-3">
-          <Tooltip content={t("Search content")} side="right">
-            <>
-              <NavLink
-                to={RouteConfig.SEARCH}
-                className={({ isActive }) => {
-                  return clsx(
-                    "sidebar-item",
-                    isActive ? "sidebar-item--active" : "",
-                  );
-                }}
-              >
-                <Search size={16} />
-                <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                  {t("Search")}
-                </span>
-              </NavLink>
-            </>
-          </Tooltip>
-          <Tooltip content={t("Bookmarks")} side="right">
-            <NavLink
-              to={RouteConfig.BOOKMARK}
-              className={({ isActive }) => {
-                return clsx(
-                  "sidebar-item",
-                  isActive ? "sidebar-item--active" : "",
-                );
-              }}
-            >
-              <Bookmark size={16} />
-              <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                {t("Bookmarks")}
-              </span>
-            </NavLink>
-          </Tooltip>
+          <SidebarNavItem
+            to={RouteConfig.SEARCH}
+            icon={Search}
+            label={t("Search")}
+            tooltip={t("Search content")}
+          />
+          <SidebarNavItem
+            to={RouteConfig.BOOKMARK}
+            icon={Bookmark}
+            label={t("Bookmarks")}
+            tooltip={t("Bookmarks")}
+          />
           <AddFeedChannel>
             <div className={"sidebar-item"}>
-              <PlusCircle size={16} />
-              <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+              <PlusCircle size={16} className="shrink-0" />
+              <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                 {t("New Subscribe")}
               </span>
             </div>
           </AddFeedChannel>
           <SettingPage>
             <div className={"sidebar-item"}>
-              <Settings size={16} />
-              <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+              <Settings size={16} className="shrink-0" />
+              <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                 {t("Settings")}
               </span>
             </div>

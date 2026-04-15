@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArticleDetail } from "@/components/ArticleView/Detail";
 import {
@@ -12,7 +12,7 @@ import { PlayerSwitcher } from "@/components/PodcastPlayer/PlayerSwitch";
 import { IconButton, Separator, Tooltip } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
 import { ArticleResItem } from "@/db";
-import { X, Bookmark, BookmarkCheck } from "lucide-react";
+import { X, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { showErrorToast, showSuccessToast } from "@/helpers/errorHandler";
 import { useBearStore } from "@/stores";
 import { useShallow } from "zustand/react/shallow";
@@ -31,6 +31,7 @@ export function View(props: ArticleViewProps) {
   const [hasBookmark, setHasBookmark] = React.useState(false);
   const [bookmarkPosition, setBookmarkPosition] = React.useState(0);
   const [hasScrolledToBookmark, setHasScrolledToBookmark] = React.useState(false);
+  const [isBookmarkLoading, setIsBookmarkLoading] = React.useState(false);
 
   const store = useBearStore(
     useShallow((state) => ({
@@ -123,27 +124,42 @@ export function View(props: ArticleViewProps) {
   };
 
   const toggleBookmark = async () => {
-    if (!props.article || !scrollBoxRef.current) return;
+    if (!props.article) return;
+
+    if (isBookmarkLoading) return;
+
+    setIsBookmarkLoading(true);
 
     try {
       if (hasBookmark) {
-        await store.deleteBookmark(props.article.uuid);
-        setHasBookmark(false);
-        setBookmarkPosition(0);
-        showSuccessToast(t("Bookmark removed"));
+        const result = await store.deleteBookmark(props.article.uuid);
+        if (result > 0) {
+          setHasBookmark(false);
+          setBookmarkPosition(0);
+          showSuccessToast(t("Bookmark removed"));
+        } else {
+          showErrorToast(new Error("No rows affected"), t("Failed to remove bookmark"));
+        }
       } else {
-        const scrollPosition = scrollBoxRef.current.getScrollPosition();
-        await store.addBookmark(
+        const scrollPosition = scrollBoxRef.current?.getScrollPosition() || 0;
+        const result = await store.addBookmark(
           props.article.uuid,
           props.article.title,
           scrollPosition,
         );
-        setHasBookmark(true);
-        setBookmarkPosition(scrollPosition);
-        showSuccessToast(t("Bookmark added"));
+        if (result > 0) {
+          setHasBookmark(true);
+          setBookmarkPosition(scrollPosition);
+          showSuccessToast(t("Bookmark added"));
+        } else {
+          showErrorToast(new Error("No rows affected"), t("Failed to add bookmark"));
+        }
       }
     } catch (error) {
+      console.error("Error toggling bookmark:", error);
       showErrorToast(error, hasBookmark ? t("Failed to remove bookmark") : t("Failed to add bookmark"));
+    } finally {
+      setIsBookmarkLoading(false);
     }
   };
 
@@ -164,8 +180,15 @@ export function View(props: ArticleViewProps) {
                 color={hasBookmark ? "blue" : "gray"}
                 className="text-[var(--gray-12)]"
                 onClick={toggleBookmark}
+                disabled={isBookmarkLoading}
               >
-                {hasBookmark ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                {isBookmarkLoading ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : hasBookmark ? (
+                  <BookmarkCheck size={16} />
+                ) : (
+                  <Bookmark size={16} />
+                )}
               </IconButton>
             </Tooltip>
             <Separator orientation={"vertical"} className="mx-1" />
