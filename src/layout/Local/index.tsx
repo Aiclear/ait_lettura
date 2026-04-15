@@ -106,7 +106,9 @@ export const LocalPage = React.memo(function () {
                 }}
               >
                 <Search size={16} />
-                {t("Search")}
+                <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                  {t("Search")}
+                </span>
               </NavLink>
             </>
           </Tooltip>
@@ -121,19 +123,25 @@ export const LocalPage = React.memo(function () {
               }}
             >
               <Bookmark size={16} />
-              {t("Bookmarks")}
+              <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                {t("Bookmarks")}
+              </span>
             </NavLink>
           </Tooltip>
           <AddFeedChannel>
             <div className={"sidebar-item"}>
               <PlusCircle size={16} />
-              {t("New Subscribe")}
+              <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                {t("New Subscribe")}
+              </span>
             </div>
           </AddFeedChannel>
           <SettingPage>
             <div className={"sidebar-item"}>
               <Settings size={16} />
-              {t("Settings")}
+              <span className="shrink grow basis-[0%] overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                {t("Settings")}
+              </span>
             </div>
           </SettingPage>
         </div>

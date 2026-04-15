@@ -1,22 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Bookmark as BookmarkIcon, Clock, Trash2, ChevronRight } from "lucide-react";
-import { Card, Button, Separator, Badge, ScrollArea, Flex, Text, Box } from "@radix-ui/themes";
-import { invoke } from "@tauri-apps/api";
-import { withErrorToast } from "@/helpers/errorHandler";
-
-interface BookmarkItem {
-  id: number;
-  uuid: string;
-  article_uuid: string;
-  article_title: string;
-  read_position: number;
-  create_date: string;
-}
+import { useNavigate } from "react-router-dom";
+import { Bookmark as BookmarkIcon, Clock, Trash2, ChevronRight, ExternalLink } from "lucide-react";
+import { Card, Button, ScrollArea, Flex, Text, Tooltip, IconButton } from "@radix-ui/themes";
+import { useBearStore } from "@/stores";
+import { useShallow } from "zustand/react/shallow";
+import { Bookmark, ArticleResItem } from "@/db";
+import { RouteConfig } from "@/config";
+import * as dataAgent from "@/helpers/dataAgent";
+import { showErrorToast } from "@/helpers/errorHandler";
+import { clsx } from "clsx";
 
 export function BookmarkPage() {
   const { t } = useTranslation();
-  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const navigate = useNavigate();
+
+  const store = useBearStore(
+    useShallow((state) => ({
+      bookmarks: state.bookmarks,
+      loadBookmarks: state.loadBookmarks,
+      deleteBookmark: state.deleteBookmark,
+      setArticle: state.setArticle,
+      setActiveBookmark: state.setActiveBookmark,
+    })),
+  );
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,8 +34,7 @@ export function BookmarkPage() {
   const loadBookmarks = async () => {
     try {
       setLoading(true);
-      const result = await invoke("get_all_bookmarks");
-      setBookmarks(result as BookmarkItem[]);
+      await store.loadBookmarks();
     } catch (error) {
       console.error("Error loading bookmarks:", error);
     } finally {
@@ -35,14 +42,34 @@ export function BookmarkPage() {
     }
   };
 
-  const deleteBookmark = async (articleUuid: string) => {
-    try {
-      await invoke("delete_bookmark", { articleUuid });
-      loadBookmarks();
-    } catch (error) {
-      console.error("Error deleting bookmark:", error);
-    }
-  };
+  const handleDeleteBookmark = useCallback(
+    async (articleUuid: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        await store.deleteBookmark(articleUuid);
+      } catch (error) {
+        showErrorToast(error, t("Failed to delete bookmark"));
+      }
+    },
+    [store.deleteBookmark, t],
+  );
+
+  const handleOpenBookmark = useCallback(
+    async (bookmark: Bookmark) => {
+      try {
+        const response = await dataAgent.getArticleDetail(bookmark.article_uuid, {});
+        if (response && response.data) {
+          const article = response.data as ArticleResItem;
+          store.setActiveBookmark(bookmark);
+          store.setArticle(article);
+          navigate(RouteConfig.LOCAL_ALL);
+        }
+      } catch (error) {
+        showErrorToast(error, t("Failed to open article"));
+      }
+    },
+    [store.setActiveBookmark, store.setArticle, navigate, t],
+  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -63,36 +90,60 @@ export function BookmarkPage() {
         <h2 className="text-xl font-semibold text-[var(--gray-12)]">
           {t("Bookmarks")}
         </h2>
+        <div className="text-sm text-[var(--gray-10)]">
+          {store.bookmarks.length} {t("items")}
+        </div>
       </div>
 
       <ScrollArea className="h-[calc(100vh_-_var(--app-toolbar-height)_-_2rem)]">
-        {bookmarks.length > 0 ? (
+        {store.bookmarks.length > 0 ? (
           <div className="space-y-3">
-            {bookmarks.map((bookmark) => (
-              <Card key={bookmark.uuid} className="p-4 hover:shadow-md transition-shadow">
-                <Flex justify="between" align="start">
-                  <div className="flex-1">
+            {store.bookmarks.map((bookmark) => (
+              <Card
+                key={bookmark.uuid}
+                className={clsx(
+                  "p-4 hover:shadow-md transition-shadow cursor-pointer group",
+                  "border border-transparent hover:border-[var(--accent-6)]",
+                )}
+                onClick={() => handleOpenBookmark(bookmark)}
+              >
+                <Flex justify="between" align="start" gap="3">
+                  <div className="flex-1 min-w-0">
                     <Flex align="center" gap="2" mb="2">
-                      <BookmarkIcon size={18} className="text-blue-600" />
-                      <Text className="font-medium truncate">
+                      <BookmarkIcon size={18} className="text-blue-600 shrink-0" />
+                      <Text className="font-medium truncate text-[var(--gray-12)]">
                         {bookmark.article_title}
                       </Text>
+                      <ExternalLink
+                        size={14}
+                        className="text-[var(--gray-8)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      />
                     </Flex>
-                    <Flex gap="2" className="text-sm text-[var(--gray-10)]">
+                    <Flex gap="4" className="text-sm text-[var(--gray-10)]">
                       <Flex align="center" gap="1">
                         <Clock size={14} />
                         <span>{formatDate(bookmark.create_date)}</span>
                       </Flex>
+                      {bookmark.read_position > 0 && (
+                        <Flex align="center" gap="1">
+                          <span>
+                            {t("Reading position")}: {Math.round(bookmark.read_position)}px
+                          </span>
+                        </Flex>
+                      )}
                     </Flex>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="2"
-                    color="red"
-                    onClick={() => deleteBookmark(bookmark.article_uuid)}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+                  <Tooltip content={t("Delete bookmark")}>
+                    <IconButton
+                      variant="ghost"
+                      size="2"
+                      color="red"
+                      onClick={(e) => handleDeleteBookmark(bookmark.article_uuid, e)}
+                      className="shrink-0"
+                    >
+                      <Trash2 size={16} />
+                    </IconButton>
+                  </Tooltip>
                 </Flex>
               </Card>
             ))}
