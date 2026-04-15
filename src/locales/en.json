@@ -101,5 +101,20 @@
   "Ops! Something wrong~": "Ops! Something wrong~",
   "Start reloading, Please wait...": "Start reloading, Please wait...",
   "{{title}} is already up to date, no new content found": "{{title}} is already up to date, no new content found",
-  "We have {{num}} new pieces of data from {{title}}": "We have {{num}} new pieces of data from {{title}}"
+  "We have {{num}} new pieces of data from {{title}}": "We have {{num}} new pieces of data from {{title}}",
+
+  "Bookmarks": "Bookmarks",
+  "Add bookmark": "Add bookmark",
+  "Remove bookmark": "Remove bookmark",
+  "Bookmark added": "Bookmark added",
+  "Bookmark removed": "Bookmark removed",
+  "Failed to add bookmark": "Failed to add bookmark",
+  "Failed to remove bookmark": "Failed to remove bookmark",
+  "No bookmarks yet": "No bookmarks yet",
+  "Save articles to read later by clicking the bookmark icon": "Save articles to read later by clicking the bookmark icon",
+  "items": "items",
+  "Reading position": "Reading position",
+  "Delete bookmark": "Delete bookmark",
+  "Failed to delete bookmark": "Failed to delete bookmark",
+  "Failed to open article": "Failed to open article"
 }
